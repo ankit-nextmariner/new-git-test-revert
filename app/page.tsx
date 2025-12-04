@@ -1,65 +1,124 @@
+"use client";
 import Image from "next/image";
 
+import { useEffect, useRef, useState } from "react";
+const heroImages = [
+  "/hero1.jpg",
+  "/hero2.jpg",
+  "/hero3.jpg"
+];
 export default function Home() {
+  const heroRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+  const [headingTransform, setHeadingTransform] = useState("translate(-50%, -50%)");
+  const [overlayOpacity, setOverlayOpacity] = useState(0.3);
+  const [currentImage, setCurrentImage] = useState(0);
+  const [fade, setFade] = useState(true);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      // Scale down from 1 to 0.7 as you scroll 0-400px
+      const newScale = Math.max(0.7, 1 - scrollY / 1000);
+      setScale(newScale);
+      // Parallax heading: move up as you scroll
+      const headingY = Math.max(-50, -50 - scrollY / 10);
+      setHeadingTransform(`translate(-50%, ${headingY}%)`);
+      // Overlay opacity increases as you scroll
+      setOverlayOpacity(Math.min(0.7, 0.3 + scrollY / 1000));
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Slideshow effect
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFade(false);
+      setTimeout(() => {
+        setCurrentImage((prev) => (prev + 1) % heroImages.length);
+        setFade(true);
+      }, 1000);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <main className="overflow-x-hidden w-100vw">
+      <div
+        ref={heroRef}
+        className="relative h-screen flex items-center justify-center"
+        style={{
+          transform: `scale(${scale})`,
+          transition: "transform 1s cubic-bezier(0.4,0,0.2,1)",
+        }}
+      >
+        <img
+          src={heroImages[currentImage]}
+          alt="Hero Slideshow"
+          className={`absolute top-0 left-0 w-screen max-w-full h-screen object-cover select-none pointer-events-none transition-opacity duration-500 ease-out ${fade ? 'opacity-300' : 'opacity-0'}`}
+          draggable={false}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+        {/* Overlay for parallax effect */}
+        <div
+          className="absolute top-0 left-0 w-screen max-w-full h-screen pointer-events-none"
+          style={{
+            background: "linear-gradient(180deg, rgba(255,255,255,) 0%, rgba(255,255,255,1 ) 100%)",
+            opacity: overlayOpacity,
+            zIndex: 1,
+            transition: "opacity 0.6s cubic-bezier(0.4,0,0.2,1)",
+          }}
+        />
+        <h1
+          className="absolute text-white text-5xl md:text-7xl font-bold z-20 text-center w-full drop-shadow-lg"
+          style={{
+            left: "50%",
+            top: "50%",
+            transform: headingTransform,
+            textShadow: "0 2px 16px rgba(0,0,0,0.7)",
+            transition: "transform 0.2s cubic-bezier(0.4,0,0.2,1)",
+          }}
+        >
+          <div className="flex flex-col text-shadow-none text-8xl">
+            NEXT <span className="text-orange-500">MARINER</span>
+            </div>
+        </h1>
+      </div>
+      {/* Revealed content section */}
+      <section
+        className="transition-all duration-700"
+        style={{
+          opacity: 0,
+          transform: "translateY(40px)",
+        }}
+        id="reveal-content"
+      >
+        <div
+          className="max-w-2xl mx-auto my-10 p-8 bg-white/95 rounded-2xl shadow-lg text-center"
+        >
+          <h2 className="text-3xl font-semibold mb-4">Scroll Reveal Content</h2>
+          <p className="text-lg text-zinc-700">
+            This content appears as you scroll past the hero section. You can add more details, features, or calls to action here.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      </section>
+      <script dangerouslySetInnerHTML={{
+        __html: `
+          window.addEventListener('scroll', function() {
+            var section = document.getElementById('reveal-content');
+            if (!section) return;
+            var trigger = window.innerHeight * 0.7;
+            var top = section.getBoundingClientRect().top;
+            if (top < trigger) {
+              section.style.opacity = 1;
+              section.style.transform = 'translateY(0)';
+            } else {
+              section.style.opacity = 0;
+              section.style.transform = 'translateY(40px)';
+            }
+          });
+        `
+      }} />
+    </main>
   );
 }
